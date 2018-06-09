@@ -4,10 +4,12 @@ buildscript {
     
     repositories {
         jcenter()
+        maven { url "http://mvn.leancloud.cn/nexus/content/repositories/releases" }
         maven {
             url 'https://maven.google.com/'
             name 'Google'
         }
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.3.0'
@@ -21,10 +23,12 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        maven { url "http://mvn.leancloud.cn/nexus/content/repositories/releases" }
         maven {
             url 'https://maven.google.com/'
             name 'Google'
         }
+        maven { url 'https://jitpack.io' }
     }
 }
 
