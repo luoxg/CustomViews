@@ -1,4 +1,4 @@
-package com.luo.justifypagetextview.view;
+package com.luo.widgets.view;
 
 import android.content.Context;
 import android.graphics.Rect;
@@ -8,8 +8,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.TextView;
 
-import com.luo.justifypagetextview.utils.PageTurningDetector;
-import com.luo.justifypagetextview.utils.PageTurningDirection;
+import com.luo.widgets.utils.PageTurningDetector;
+import com.luo.widgets.utils.PageTurningDirection;
 
 /**
  * Created by lxg on 2018/6/8.

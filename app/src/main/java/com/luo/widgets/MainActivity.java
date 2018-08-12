@@ -1,4 +1,4 @@
-package com.luo.justifypagetextview;
+package com.luo.widgets;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

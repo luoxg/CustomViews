@@ -1,4 +1,4 @@
-package com.luo.justifypagetextview.view;
+package com.luo.widgets.view;
 
 import android.content.Context;
 import android.graphics.Canvas;

@@ -1,4 +1,4 @@
-package com.luo.justifypagetextview.utils;
+package com.luo.widgets.utils;
 
 import android.content.Context;
 import android.util.TypedValue;

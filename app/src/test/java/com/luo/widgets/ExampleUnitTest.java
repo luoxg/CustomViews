@@ -1,4 +1,4 @@
-package com.luo.justifypagetextview;
+package com.luo.widgets;
 
 import org.junit.Test;
 
