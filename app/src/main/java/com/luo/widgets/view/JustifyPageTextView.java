@@ -1,4 +1,4 @@
-package com.luo.widgets.view;
+package com.onyx.jdread.tob.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,22 +8,25 @@ import android.support.v7.widget.AppCompatTextView;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
+import android.text.style.AlignmentSpan;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.TextView;
 
-import com.luo.widgets.utils.PageTurningDetector;
-import com.luo.widgets.utils.PageTurningDirection;
+import com.onyx.android.sdk.ui.utils.PageTurningDetector;
+import com.onyx.android.sdk.ui.utils.PageTurningDirection;
+import com.onyx.android.sdk.utils.StringUtils;
 
 /**
- * Created by lxg on 2018/6/8.
+ * Created by lxg on 2018/6/6.
  */
-
 
 public class JustifyPageTextView extends AppCompatTextView {
     private OnPagingListener onPagingListener;
     private boolean canTouchPageTurning = true;
     private boolean pageTurningCycled = false;
+    private boolean justify = true;
+
     private CharSequence srcContent = null;
     private int currentPageNumber = 0;
     private int totalPageNumber = 0;
@@ -61,17 +64,33 @@ public class JustifyPageTextView extends AppCompatTextView {
         this.onPagingListener = listener;
     }
 
+    public boolean isJustify() {
+        return justify;
+    }
+
+    public void setJustify(boolean justify) {
+        this.justify = justify;
+    }
+
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        resize();
+        resize(changed);
     }
 
-    private int resize() {
+    public int resize(boolean changed) {
         CharSequence oldContent = getText();
+        if (StringUtils.isNullOrEmpty(oldContent)) {
+            this.srcContent = "";
+            return -1;
+        }
         if (srcContent == null || srcContent.length() <= 0) {
             getPage();
             srcContent = oldContent;
+            gotoFirstPage();
+        } else if (changed) {
+            setText(srcContent);
+            getPage();
             gotoFirstPage();
         }
         CharSequence newContent = oldContent.subSequence(0, getCharNum());
@@ -121,6 +140,9 @@ public class JustifyPageTextView extends AppCompatTextView {
     }
 
     public void prevPage() {
+        if (totalPageNumber <= 1) {
+            return;
+        }
         currentPageNumber--;
         if (currentPageNumber < 0) {
             if (pageTurningCycled) {
@@ -144,6 +166,9 @@ public class JustifyPageTextView extends AppCompatTextView {
     }
 
     public void nextPage() {
+        if (totalPageNumber <= 1) {
+            return;
+        }
         currentPageNumber++;
         if (currentPageNumber >= totalPageNumber) {
             if (pageTurningCycled) {
@@ -263,7 +288,11 @@ public class JustifyPageTextView extends AppCompatTextView {
             int lineEnd = layout.getLineEnd(i);
             float width = StaticLayout.getDesiredWidth(text, lineStart, lineEnd, getPaint());
             CharSequence line = text.subSequence(lineStart, lineEnd);
-            StaticLayout staticLayout = new StaticLayout(line, paint, canvas.getWidth(), Layout.Alignment.ALIGN_NORMAL, layout.getSpacingMultiplier(), layout.getSpacingAdd(), false);
+            Layout.Alignment alignment = Layout.Alignment.ALIGN_NORMAL;
+            if (line instanceof AlignmentSpan) {
+                alignment = ((AlignmentSpan) line).getAlignment();
+            }
+            StaticLayout staticLayout = new StaticLayout(line, paint, canvas.getWidth(), alignment, layout.getSpacingMultiplier(), layout.getSpacingAdd(), false);
             staticLayout.getHeight();
             if (((currentPageNumber < totalPageNumber - 1) || (i < layout.getLineCount() - 1)) && needScale(line)) {
                 drawScaledText(canvas, paint, lineStart, line, width, layout);
@@ -318,7 +347,9 @@ public class JustifyPageTextView extends AppCompatTextView {
     }
 
     private boolean needScale(CharSequence line) {
-        if (line == null || line.length() == 0) {
+        if (!isJustify()) {
+            return false;
+        } else if (line == null || line.length() == 0) {
             return false;
         } else {
             return line.charAt(line.length() - 1) != '\n';
