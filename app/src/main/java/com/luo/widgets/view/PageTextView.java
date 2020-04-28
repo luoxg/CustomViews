@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.luo.widgets.utils.PageTurningDetector;
 import com.luo.widgets.utils.PageTurningDirection;
+import com.luo.widgets.utils.StringUtils;
 
 /**
  * Created by lxg on 2018/6/8.
@@ -58,14 +59,22 @@ public class PageTextView extends AppCompatTextView {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        resize();
+        resize(changed);
     }
 
-    private int resize() {
+    private int resize(boolean changed) {
         CharSequence oldContent = getText();
+        if (StringUtils.isNullOrEmpty(oldContent)) {
+            this.srcContent = "";
+            return -1;
+        }
         if (srcContent == null || srcContent.length() <= 0) {
             getPage();
             srcContent = oldContent;
+            gotoFirstPage();
+        } else if (changed) {
+            setText(srcContent);
+            getPage();
             gotoFirstPage();
         }
         CharSequence newContent = oldContent.subSequence(0, getCharNum());
@@ -78,11 +87,17 @@ public class PageTextView extends AppCompatTextView {
     }
 
     public int getCharNum() {
+        if (getLayout() == null) {
+            return 0;
+        }
         return getLayout().getLineEnd(getLineNum());
     }
 
     public int getLineNum() {
         Layout layout = getLayout();
+        if (layout == null) {
+            return 0;
+        }
         int topOfLastLine = getHeight() - getPaddingTop() - getPaddingBottom() - getLineHeight();
         return layout.getLineForVertical(topOfLastLine);
     }
@@ -219,6 +234,9 @@ public class PageTextView extends AppCompatTextView {
 
     private int findNotEmptyLine(int start) {
         Layout layout = getLayout();
+        if (layout == null) {
+            return -1;
+        }
         int line = getLineCount();
         if (start >= line) {
             return -1;
