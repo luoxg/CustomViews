@@ -1,4 +1,4 @@
-package com.onyx.jdread.tob.view;
+package com.luo.widgets.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.v7.widget.AppCompatTextView;
 import android.text.Layout;
+import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -14,9 +15,9 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.TextView;
 
-import com.onyx.android.sdk.ui.utils.PageTurningDetector;
-import com.onyx.android.sdk.ui.utils.PageTurningDirection;
-import com.onyx.android.sdk.utils.StringUtils;
+import com.luo.widgets.utils.PageTurningDetector;
+import com.luo.widgets.utils.PageTurningDirection;
+import com.luo.widgets.utils.StringUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
  */
 
 public class JustifyPageTextView extends AppCompatTextView {
-    private String skipIndexTextRegex = "( )*\\（\\d\\）";
+    private String skipIndexTextRegex = "\\（[a-zA-Z\\d]\\）|\\([a-zA-Z\\d]\\)";
     private OnPagingListener onPagingListener;
     private boolean canTouchPageTurning = true;
     private boolean pageTurningCycled = false;
@@ -125,11 +126,17 @@ public class JustifyPageTextView extends AppCompatTextView {
     }
 
     public int getCharNum() {
+        if (getLayout() == null) {
+            return 0;
+        }
         return getLayout().getLineEnd(getLineNum());
     }
 
     public int getLineNum() {
         Layout layout = getLayout();
+        if (layout == null) {
+            return 0;
+        }
         int topOfLastLine = getHeight() - getPaddingTop() - getPaddingBottom() - getLineHeight();
         return layout.getLineForVertical(topOfLastLine);
     }
@@ -272,6 +279,9 @@ public class JustifyPageTextView extends AppCompatTextView {
 
     private int findNotEmptyLine(int start) {
         Layout layout = getLayout();
+        if (layout == null) {
+            return -1;
+        }
         int line = getLineCount();
         if (start >= line) {
             return -1;
@@ -310,21 +320,48 @@ public class JustifyPageTextView extends AppCompatTextView {
             int lineEnd = layout.getLineEnd(i);
             float width = StaticLayout.getDesiredWidth(text, lineStart, lineEnd, getPaint());
             CharSequence line = text.subSequence(lineStart, lineEnd);
-            Layout.Alignment alignment = Layout.Alignment.ALIGN_NORMAL;
-            if (line instanceof AlignmentSpan) {
-                alignment = ((AlignmentSpan) line).getAlignment();
-            }
+            Layout.Alignment alignment = getTextAlignment(line);
             StaticLayout staticLayout = new StaticLayout(line, paint, canvas.getWidth(), alignment, layout.getSpacingMultiplier(), layout.getSpacingAdd(), false);
             staticLayout.getHeight();
             if (isJustify() && ((currentPageNumber < totalPageNumber - 1) || (i < layout.getLineCount() - 1)) && needScale(line)) {
                 drawScaledText(canvas, paint, lineStart, line, width, layout);
             } else {
-                canvas.translate(0, mLineY);
+                float dx = getDxOfLineByAlignment(alignment, staticLayout.getWidth());
+                canvas.translate(dx, mLineY);
                 staticLayout.draw(canvas);
-                canvas.translate(0, -mLineY);
+                canvas.translate(-dx, -mLineY);
             }
             mLineY += textHeight;
         }
+    }
+
+    /**
+     * @param line
+     * @return
+     */
+    private Layout.Alignment getTextAlignment(CharSequence line) {
+        Layout.Alignment alignment = Layout.Alignment.ALIGN_NORMAL;
+        if (line == null || line.length() == 0) {
+            return alignment;
+        }
+        if (line instanceof Spanned) {
+            Spanned spanned = (Spanned) line;
+            AlignmentSpan[] alignmentSpans = spanned.getSpans(0, line.length(), AlignmentSpan.class);
+            for (AlignmentSpan span : alignmentSpans) {
+                alignment = span.getAlignment();
+            }
+        }
+        return alignment;
+    }
+
+    private float getDxOfLineByAlignment(Layout.Alignment alignment, int lineWidth) {
+        float dx = 0;
+        if (alignment == Layout.Alignment.ALIGN_CENTER) {
+            dx = (mViewWidth - lineWidth) * 1.0f / 2;
+        } else if (alignment == Layout.Alignment.ALIGN_OPPOSITE) {
+            dx = mViewWidth - lineWidth;
+        }
+        return dx;
     }
 
     private void drawScaledText(Canvas canvas, TextPaint paint, int lineStart, CharSequence line, float lineWidth, Layout layout) {
